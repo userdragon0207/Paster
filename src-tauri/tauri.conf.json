@@ -7,7 +7,7 @@
     "withGlobalTauri": true
   },
   "package": {
-    "productName": "paster",
+    "productName": "Paster",
     "version": "0.1.4"
   },
   "tauri": {
@@ -44,7 +44,7 @@
       },
       "resources": [],
       "shortDescription": "",
-      "targets": "all",
+      "targets": ["nsis"],  
       "windows": {
         "certificateThumbprint": null,
         "digestAlgorithm": "sha256",
@@ -69,7 +69,7 @@
         "maximizable": true,
         "minimizable": true,
         "alwaysOnTop": true,
-        "title": "Paster By: Wed0n"
+        "title": "模拟输入 运维: JWL"
       }
     ]
   }
