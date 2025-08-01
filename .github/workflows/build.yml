@@ -1,4 +1,4 @@
-name: Build Paster (Windows)
+name: Build Paster (Windows 便携版)
 
 on:
   push:
@@ -104,30 +104,31 @@ jobs:
           .\webview2-installer.exe /silent /install
         shell: pwsh
 
-      # 12. 构建Tauri应用（默认Release模式）
-      - name: Build Tauri app
+      # 12. 构建Tauri便携版应用
+      - name: Build Tauri portable app
         run: cargo tauri build
         working-directory: ./src-tauri
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 13. 验证编译产物
-      - name: Verify build output
+      # 13. 验证便携版产物
+      - name: Verify portable build output
         id: verify-build
         run: |
-          $exePath = Get-ChildItem -Path ./src-tauri/target/release/bundle -Filter *.exe -Recurse | Select-Object -First 1
+          # 便携版EXE直接生成在target/release目录
+          $exePath = Get-ChildItem -Path ./src-tauri/target/release -Filter *.exe -Recurse | Select-Object -First 1
           if (-not $exePath) {
-            Write-Error "No EXE file found"
+            Write-Error "No portable EXE file found"
             exit 1
           }
-          Write-Host "Found executable: $($exePath.FullName)"
+          Write-Host "Found portable executable: $($exePath.FullName)"
           echo "exePath=$($exePath.FullName)" >> $env:GITHUB_OUTPUT
         shell: pwsh
 
-      # 14. 上传编译产物（仅保留EXE）
-      - name: Upload artifacts
+      # 14. 上传便携版产物
+      - name: Upload portable artifact
         uses: actions/upload-artifact@v4
         with:
-          name: paster-windows-v${{ github.ref_name }}
-          path: ${{ steps.verify-build.outputs.exePath }}  # 只上传EXE文件
+          name: paster-windows-portable-v${{ github.ref_name }}
+          path: ${{ steps.verify-build.outputs.exePath }}
           retention-days: 14
