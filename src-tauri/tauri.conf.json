@@ -44,11 +44,12 @@
       },
       "resources": [],
       "shortDescription": "",
-      "targets": ["nsis"],  
+      "targets": ["app"],  // 只生成单文件应用（非安装包）
       "windows": {
         "certificateThumbprint": null,
         "digestAlgorithm": "sha256",
-        "timestampUrl": ""
+        "timestampUrl": "",
+        "portable": true  // 启用便携模式
       }
     },
     "security": {
