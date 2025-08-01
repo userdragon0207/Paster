@@ -124,12 +124,10 @@ jobs:
           echo "exePath=$($exePath.FullName)" >> $env:GITHUB_OUTPUT
         shell: pwsh
 
-      # 14. 上传编译产物
+      # 14. 上传编译产物（仅保留EXE）
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: paster-windows-v${{ github.ref_name }}
-          path: |
-            ${{ steps.verify-build.outputs.exePath }}
-            src-tauri/target/release/bundle/**/*.msi
+          path: ${{ steps.verify-build.outputs.exePath }}  # 只上传EXE文件
           retention-days: 14
