@@ -44,7 +44,7 @@
       },
       "resources": [],
       "shortDescription": "",
-      "targets": ["nsis"],  
+      "targets": ["nsis"],  // 仅生成NSIS格式的EXE
       "windows": {
         "certificateThumbprint": null,
         "digestAlgorithm": "sha256",
