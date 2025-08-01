@@ -42,7 +42,6 @@
         "providerShortName": null,
         "signingIdentity": null
       },
-      "portable": true,  // 启用便携模式（正确位置）
       "resources": [],
       "shortDescription": "",
       "targets": "all",
