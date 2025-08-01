@@ -42,14 +42,14 @@
         "providerShortName": null,
         "signingIdentity": null
       },
+      "portable": true,  // 启用便携模式（正确位置）
       "resources": [],
       "shortDescription": "",
-      "targets": ["app"],  // 只生成单文件应用（非安装包）
+      "targets": "all",
       "windows": {
         "certificateThumbprint": null,
         "digestAlgorithm": "sha256",
-        "timestampUrl": "",
-        "portable": true  // 启用便携模式
+        "timestampUrl": ""
       }
     },
     "security": {
