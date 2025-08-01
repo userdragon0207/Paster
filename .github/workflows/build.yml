@@ -1,0 +1,135 @@
+name: Build Paster (Windows)
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      # 1. 拉取代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 2. 安装Node.js
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: ''  # 禁用自动缓存，避免路径冲突
+
+      # 3. 配置npm全局路径（解决pnpm路径问题）
+      - name: Get npm global prefix
+        id: npm-config
+        run: |
+          $npmPrefix = (npm prefix -g).Trim()
+          Write-Host "npm global prefix: $npmPrefix"
+          echo "$npmPrefix" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "npmPrefix=$npmPrefix" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
+      # 4. 安装pnpm并验证路径
+      - name: Install and verify pnpm
+        id: pnpm-install
+        run: |
+          npm install -g pnpm@8.15.6
+          $pnpmExePath = Join-Path -Path "${{ steps.npm-config.outputs.npmPrefix }}" -ChildPath "pnpm.cmd"
+          Write-Host "Checking pnpm path: $pnpmExePath"
+          if (Test-Path $pnpmExePath) {
+            Write-Host "pnpm installed successfully"
+            echo "pnpmExePath=$pnpmExePath" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Error "pnpm not found at $pnpmExePath"
+            Get-ChildItem -Path "${{ steps.npm-config.outputs.npmPrefix }}" | Format-Table
+            exit 1
+          }
+        shell: pwsh
+
+      # 5. 验证pnpm可用性
+      - name: Verify pnpm version
+        run: |
+          "${{ steps.pnpm-install.outputs.pnpmExePath }}" --version
+        shell: cmd
+
+      # 6. 检查锁文件
+      - name: Check for pnpm-lock.yaml
+        run: |
+          if not exist "pnpm-lock.yaml" (
+            echo "Error: pnpm-lock.yaml not found"
+            exit 1
+          ) else (
+            echo "pnpm-lock.yaml found"
+          )
+        shell: cmd
+
+      # 7. 安装前端依赖
+      - name: Install frontend dependencies
+        run: |
+          "${{ steps.pnpm-install.outputs.pnpmExePath }}" install --frozen-lockfile
+        shell: cmd
+
+      # 8. 构建前端代码
+      - name: Build frontend
+        run: |
+          "${{ steps.pnpm-install.outputs.pnpmExePath }}" build
+        env:
+          NODE_ENV: production
+        shell: cmd
+
+      # 9. 安装兼容版本的Rust
+      - name: Install Rust 1.75.0
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.75.0
+          cache: true
+          cache-key: 'rust-cache-${{ hashFiles(''src-tauri/Cargo.lock'') }}'
+
+      # 10. 安装兼容版本的Tauri CLI
+      - name: Install Tauri CLI 1.5.6
+        run: |
+          cargo install tauri-cli --version 1.5.6 --locked
+
+      # 11. 安装WebView2运行时（Windows必需）
+      - name: Install WebView2 runtime
+        run: |
+          Invoke-WebRequest -Uri https://go.microsoft.com/fwlink/p/?LinkId=2124703 -OutFile webview2-installer.exe
+          .\webview2-installer.exe /silent /install
+        shell: pwsh
+
+      # 12. 构建Tauri应用（默认Release模式）
+      - name: Build Tauri app
+        run: cargo tauri build
+        working-directory: ./src-tauri
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 13. 验证编译产物
+      - name: Verify build output
+        id: verify-build
+        run: |
+          $exePath = Get-ChildItem -Path ./src-tauri/target/release/bundle -Filter *.exe -Recurse | Select-Object -First 1
+          if (-not $exePath) {
+            Write-Error "No EXE file found"
+            exit 1
+          }
+          Write-Host "Found executable: $($exePath.FullName)"
+          echo "exePath=$($exePath.FullName)" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
+      # 14. 上传编译产物
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: paster-windows-v${{ github.ref_name }}
+          path: |
+            ${{ steps.verify-build.outputs.exePath }}
+            src-tauri/target/release/bundle/**/*.msi
+          retention-days: 14
