@@ -7,7 +7,7 @@
     "withGlobalTauri": true
   },
   "package": {
-    "productName": "37打字",
+    "productName": "37Type",
     "version": "0.1.4"
   },
   "tauri": {
