@@ -103,7 +103,7 @@ export default function App() {
           }}>
           {errMsg == '' ? (
             <Body1Stronger>
-              单击按钮后, 将在3S后开始, 延迟(ms)范围为[基本延迟,
+              单击按钮后, 将在3S后开始打字, 延迟(ms)范围为[基本延迟,
               基本延迟+浮动值]
             </Body1Stronger>
           ) : (
