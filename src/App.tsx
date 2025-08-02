@@ -144,7 +144,7 @@ export default function App() {
             disabled={buttonDisabled}
             onClick={onClick}>
             {counter == -1 ? (
-              '粘贴'
+              '开始打字'
             ) : counter == 0 ? (
               <Spinner size="tiny" />
             ) : (
