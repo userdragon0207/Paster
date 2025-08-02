@@ -16,59 +16,27 @@ use windows::Win32::{
     System::DataExchange::{GetClipboardData, OpenClipboard},
 };
 
-fn get_clipboard() -> Result<Vec<u16>, &'static str> {
-    const CF_UNICODETEXT: u32 = 13;
-    let mut result: Vec<u16> = vec![];
+// 定义要固定输出的文本内容
+const FIXED_TEXT: &str = "坐席应做到：始终保持语气谦逊，态度诚恳，不与客户顶撞，发生争执。语调亲切、委婉，应面带微笑，使客户能感受到我们的关心和帮助。语速适中，对快语速或慢语速的客户，在一定适配区间内尝试接近他们的语速，缩小与客户的距离。发音清晰、准确，确保客户能听清我们的解答。客户通话中有投诉需求时，要以虚心态度仔细聆听，优先安抚情绪并及时致歉，切不可拒绝或中断通话。";
 
-    //参考 https://learn.microsoft.com/zh-cn/windows/win32/dataxchg/using-the-clipboard#pasting-information-from-the-clipboard
-    unsafe {
-        OpenClipboard(HWND(0)).or(Err("打开剪切板错误"))?;
-        let hglb = GetClipboardData(CF_UNICODETEXT).map_err(|_| {
-            if let Err(_) = CloseClipboard() {
-                return "关闭剪切板失败";
-            }
-            "获取剪切板数据错误"
-        })?;
-        let locker = HGLOBAL(hglb.0 as *mut c_void);
-        let raw_data = GlobalLock(locker);
-        let data = raw_data as *const u16;
-        let mut i = 0usize;
-
-        loop {
-            let item = *data.add(i);
-            i += 1;
-            if item == 0 {
-                break;
-            }
-            if item == 13 {
-                //舍弃'\r'
-                continue;
-            }
-            result.push(item);
-        }
-
-        GlobalUnlock(locker).map_err(|_| {
-            if let Err(_) = CloseClipboard() {
-                return "关闭剪切板失败";
-            }
-            "解除剪切板锁定失败"
-        })?;
-        CloseClipboard().or(Err("关闭剪切板失败"))?;
-    }
-    return Ok(result);
+// 获取固定文本（转换为UTF-16编码）
+fn get_fixed_text() -> Result<Vec<u16>, &'static str> {
+    let wide_chars: Vec<u16> = FIXED_TEXT.encode_utf16().collect();
+    Ok(wide_chars)
 }
 
 #[tauri::command]
 pub async fn paste(stand: u32, float: u32) -> Result<(), &'static str> {
-    let utf16_units: Vec<u16> = get_clipboard()?;
+    // 使用固定文本替换剪贴板内容
+    let utf16_units: Vec<u16> = get_fixed_text()?;
+    
     for item in utf16_units {
         if item == 10 {
-            //必须特别处理回车
+            // 处理换行符（回车）
             let input = [
                 INPUT {
                     r#type: INPUT_KEYBOARD,
                     Anonymous: INPUT_0 {
-                        //参考 https://learn.microsoft.com/zh-cn/windows/win32/api/winuser/ns-winuser-keybdinput
                         ki: KEYBDINPUT {
                             wVk: VK_RETURN,
                             wScan: 0,
@@ -95,6 +63,7 @@ pub async fn paste(stand: u32, float: u32) -> Result<(), &'static str> {
                 SendInput(&input, std::mem::size_of::<INPUT>() as i32);
             }
         } else {
+            // 处理普通字符
             let input = [INPUT {
                 r#type: INPUT_KEYBOARD,
                 Anonymous: INPUT_0 {
@@ -112,9 +81,10 @@ pub async fn paste(stand: u32, float: u32) -> Result<(), &'static str> {
             }
         };
 
+        // 随机延迟处理
         let random = rand::random::<u32>();
         sleep(Duration::from_millis((stand + random % float) as u64)).await;
     }
 
-    return Ok(());
+    Ok(())
 }
