@@ -7,7 +7,7 @@
     "withGlobalTauri": true
   },
   "package": {
-    "productName": "37Type",
+    "productName": "37dazi",
     "version": "0.1.4"
   },
   "tauri": {
