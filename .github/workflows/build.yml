@@ -76,6 +76,13 @@ jobs:
           "${{ steps.pnpm-install.outputs.pnpmExePath }}" install --frozen-lockfile
         shell: cmd
 
+      # 👇 在此处插入清理缓存步骤
+      - name: Clean build cache
+        run: |
+          cd src-tauri && cargo clean  # 清理 Rust 编译缓存
+          rm -rf ../dist  # 清理前端构建产物（确保与实际产物目录一致）
+        shell: bash  # 使用 bash 执行跨平台命令
+
       # 8. 构建前端代码
       - name: Build frontend
         run: |
@@ -83,13 +90,6 @@ jobs:
         env:
           NODE_ENV: production
         shell: cmd
-
-      # 👇 在此处插入清理缓存步骤
-      - name: Clean build cache
-        run: |
-          cd src-tauri && cargo clean  # 清理 Rust 编译缓存
-          rm -rf ../dist  # 清理前端构建产物（确保与实际产物目录一致）
-        shell: bash  # 使用 bash 执行跨平台命令
       
       # 9. 安装兼容版本的Rust
       - name: Install Rust 1.75.0
