@@ -90,13 +90,7 @@ jobs:
         with:
           toolchain: 1.75.0
           cache: true
-          cache-key: 'rust-cache-${{ hashFiles(''src-tauri/Cargo.lock'') }}'
-
-      # 👇 新增：仅清理 Rust 缓存（解决图标缓存问题）
-      - name: Clean Rust build cache
-        run: |
-          cd src-tauri && cargo clean  # 清理 Rust 编译缓存（旧图标可能存于此）
-        shell: bash      
+          cache-key: 'rust-cache-${{ hashFiles(''src-tauri/Cargo.lock'') }}-v2'   
      
       # 10. 安装兼容版本的Tauri CLI
       - name: Install Tauri CLI 1.5.6
@@ -110,6 +104,18 @@ jobs:
           .\webview2-installer.exe /silent /install
         shell: pwsh
 
+      # 在第 12 步（Build Tauri portable app）之前添加
+      - name: Verify new icon exists
+        run: |
+          # 检查图标文件是否存在且大小不为0
+          if (-not (Test-Path "src-tauri/icons/icon.ico") -or (Get-Item "src-tauri/icons/icon.ico").Length -eq 0) {
+            Write-Error "New icon file not found or empty: src-tauri/icons/icon.ico"
+            exit 1
+          } else {
+            Write-Host "New icon verified: $(Get-Item "src-tauri/icons/icon.ico").FullName"
+          }
+        shell: pwsh
+      
       # 12. 构建Tauri便携版应用
       - name: Build Tauri portable app
         run: cargo tauri build
