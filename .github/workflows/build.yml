@@ -92,6 +92,12 @@ jobs:
           cache: true
           cache-key: 'rust-cache-${{ hashFiles(''src-tauri/Cargo.lock'') }}'
 
+      # 👇 新增：仅清理 Rust 缓存（解决图标缓存问题）
+      - name: Clean Rust build cache
+        run: |
+          cd src-tauri && cargo clean  # 清理 Rust 编译缓存（旧图标可能存于此）
+        shell: bash      
+     
       # 10. 安装兼容版本的Tauri CLI
       - name: Install Tauri CLI 1.5.6
         run: |
