@@ -132,4 +132,3 @@ jobs:
           name: paster-windows-portable-v${{ github.ref_name }}
           path: ${{ steps.verify-build.outputs.exePath }}
           retention-days: 14
- 
